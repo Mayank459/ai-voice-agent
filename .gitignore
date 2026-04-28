@@ -1,0 +1,23 @@
+# Environment variables
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.venv/
+build/
+dist/
+
+# System
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.mp3
+*.webm
+*.docx
+AI_Voice_Agent_Prerequisites.md
+project_requirements.md

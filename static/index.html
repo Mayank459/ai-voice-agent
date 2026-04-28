@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mock Interviewer – Alex</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{font-family:'Inter',sans-serif;background:#0a0a0f;color:#e2e8f0;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow-y:auto;}
+        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 50%,rgba(99,102,241,.12) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(168,85,247,.1) 0%,transparent 60%),radial-gradient(ellipse at 60% 90%,rgba(59,130,246,.08) 0%,transparent 60%);pointer-events:none;z-index:0;}
+        .container{position:relative;z-index:1;width:100%;max-width:960px;padding:2rem;display:flex;flex-direction:column;align-items:center;gap:1.5rem;}
+        .header{text-align:center;}
+        .badge{display:inline-flex;align-items:center;gap:.4rem;background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;padding:.3rem .8rem;border-radius:999px;font-size:.75rem;font-weight:500;letter-spacing:.05em;text-transform:uppercase;margin-bottom:1rem;}
+        .header h1{font-size:2.2rem;font-weight:700;background:linear-gradient(135deg,#e2e8f0 0%,#a5b4fc 50%,#818cf8 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+        .header p{color:#94a3b8;margin-top:.4rem;font-size:.9rem;}
+
+        /* ── side-by-side panel ── */
+        .interview-panel{display:flex;gap:1.5rem;width:100%;align-items:stretch;}
+
+        /* ── avatar column (left) ── */
+        .avatar-col{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.75rem;min-width:170px;background:rgba(15,15,25,.7);border:1px solid rgba(99,102,241,.2);border-radius:20px;padding:1.75rem 1.25rem;backdrop-filter:blur(10px);flex-shrink:0;}
+        .avatar-container{position:relative;display:flex;align-items:center;justify-content:center;width:130px;height:130px;}
+        .ring{position:absolute;border-radius:50%;border:2px solid rgba(99,102,241,.4);animation:none;}
+        .ring-1{width:130px;height:130px;}
+        .ring-2{width:104px;height:104px;border-color:rgba(168,85,247,.3);}
+        @keyframes pulse-ring{0%{transform:scale(1);opacity:.8;}100%{transform:scale(1.18);opacity:0;}}
+        .avatar-container.speaking .ring-1{animation:pulse-ring 1.2s ease-out infinite;}
+        .avatar-container.speaking .ring-2{animation:pulse-ring 1.2s ease-out .3s infinite;}
+        .avatar{width:92px;height:92px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:0 0 40px rgba(99,102,241,.3);z-index:1;transition:box-shadow .3s;}
+        .avatar-container.speaking .avatar{box-shadow:0 0 70px rgba(99,102,241,.7);}
+        .recruiter-name{font-weight:700;font-size:1rem;color:#c7d2fe;text-align:center;}
+        .recruiter-title{font-size:.75rem;color:#64748b;text-align:center;}
+        .lang-badge{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;border-radius:999px;font-size:.72rem;font-weight:600;letter-spacing:.04em;transition:all .3s;border:1px solid;}
+        .lang-badge.en{background:rgba(52,211,153,.1);border-color:rgba(52,211,153,.3);color:#34d399;}
+        .lang-badge.hi{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.3);color:#fb923c;}
+        .mic-ring{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(248,113,113,.12);border:2px solid rgba(248,113,113,.4);transition:all .2s;font-size:1.3rem;}
+        .mic-ring.active{background:rgba(248,113,113,.22);border-color:#f87171;box-shadow:0 0 18px rgba(248,113,113,.5);animation:mic-pulse .7s ease infinite alternate;}
+        .mic-ring.muted{opacity:.3;}
+        @keyframes mic-pulse{from{transform:scale(1);}to{transform:scale(1.1);}}
+        .mic-label{font-size:.7rem;color:#64748b;text-align:center;min-height:16px;}
+
+        /* ── chat column (right) ── */
+        .chat-col{display:flex;flex-direction:column;gap:.75rem;flex:1;min-width:0;}
+        .transcript-box{width:100%;background:rgba(15,15,25,.8);border:1px solid rgba(99,102,241,.2);border-radius:16px;padding:1.5rem;height:340px;overflow-y:auto;display:flex;flex-direction:column;gap:.75rem;backdrop-filter:blur(10px);}
+        .transcript-box::-webkit-scrollbar{width:4px;}
+        .transcript-box::-webkit-scrollbar-track{background:transparent;}
+        .transcript-box::-webkit-scrollbar-thumb{background:rgba(99,102,241,.4);border-radius:2px;}
+        .message{display:flex;flex-direction:column;gap:.2rem;animation:fadeInUp .3s ease;}
+        @keyframes fadeInUp{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+        .message.recruiter{align-items:flex-start;}
+        .message.candidate{align-items:flex-end;}
+        .message-label{font-size:.7rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+        .message.recruiter .message-label{color:#818cf8;}
+        .message.candidate .message-label{color:#34d399;}
+        .message-bubble{padding:.6rem 1rem;border-radius:12px;max-width:85%;font-size:.88rem;line-height:1.5;}
+        .message.recruiter .message-bubble{background:rgba(99,102,241,.15);border:1px solid rgba(99,102,241,.2);color:#c7d2fe;border-bottom-left-radius:4px;}
+        .message.candidate .message-bubble{background:rgba(52,211,153,.1);border:1px solid rgba(52,211,153,.2);color:#a7f3d0;border-bottom-right-radius:4px;}
+        .empty-state{flex:1;display:flex;align-items:center;justify-content:center;color:#475569;font-size:.9rem;text-align:center;}
+        .status-bar{display:flex;align-items:center;gap:.5rem;font-size:.85rem;color:#64748b;height:24px;}
+        .status-dot{width:8px;height:8px;border-radius:50%;background:#475569;transition:all .3s;}
+        .status-dot.connected{background:#34d399;box-shadow:0 0 6px #34d399;}
+        .status-dot.recording{background:#f87171;box-shadow:0 0 6px #f87171;animation:blink 1s infinite;}
+        .status-dot.processing{background:#fbbf24;box-shadow:0 0 6px #fbbf24;}
+        .status-dot.speaking{background:#818cf8;box-shadow:0 0 6px #818cf8;animation:blink .8s infinite;}
+        @keyframes blink{0%,100%{opacity:1;}50%{opacity:.3;}}
+        .interrupt-btn{display:none;align-items:center;gap:.4rem;padding:.5rem 1.1rem;border-radius:999px;background:rgba(251,146,60,.15);border:1px solid rgba(251,146,60,.4);color:#fb923c;font-size:.8rem;font-weight:600;cursor:pointer;transition:all .2s;font-family:'Inter',sans-serif;}
+        .interrupt-btn:hover{background:rgba(251,146,60,.25);}
+        .interrupt-btn.visible{display:inline-flex;}
+        .controls{display:flex;flex-direction:column;align-items:center;gap:.75rem;}
+        .controls-row{display:flex;gap:1rem;align-items:center;}
+        .btn{display:inline-flex;align-items:center;justify-content:center;gap:.5rem;padding:.75rem 1.75rem;border-radius:12px;font-family:'Inter',sans-serif;font-size:.9rem;font-weight:600;cursor:pointer;transition:all .2s;border:none;outline:none;}
+        .btn-primary{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;box-shadow:0 4px 20px rgba(99,102,241,.3);}
+        .btn-primary:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 8px 25px rgba(99,102,241,.5);}
+        .btn-stop{background:rgba(30,30,50,.9);color:#94a3b8;border:1px solid rgba(99,102,241,.2);}
+        .btn-stop:hover:not(:disabled){background:rgba(40,40,60,.9);color:#c7d2fe;}
+        .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="badge">🎙️ AI Voice Interview</div>
+        <h1>Mock Tech Interview</h1>
+        <p>Continuous conversation — speak naturally, interrupt anytime</p>
+    </div>
+
+    <!-- side-by-side: avatar left, chat right -->
+    <div class="interview-panel">
+
+        <!-- LEFT: Alex avatar -->
+        <div class="avatar-col">
+            <div class="avatar-container" id="avatarContainer">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="avatar">🧑‍💼</div>
+            </div>
+            <div class="recruiter-name">Alex</div>
+            <div class="recruiter-title">Senior Technical Recruiter</div>
+            <span class="lang-badge en" id="langBadge">🌐 English</span>
+            <div class="mic-ring muted" id="micRing" style="display:none">🎤</div>
+            <div class="mic-label" id="micLabel"></div>
+        </div>
+
+        <!-- RIGHT: transcript + status -->
+        <div class="chat-col">
+            <div class="transcript-box" id="transcriptBox">
+                <div class="empty-state" id="emptyState">Press "Start Interview" to begin your mock technical phone screen</div>
+            </div>
+            <div class="status-bar">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Not connected</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- controls below the panel -->
+    <div class="controls">
+        <div class="controls-row">
+            <button class="btn btn-primary" id="startBtn" onclick="startInterview()">🚀 Start Interview</button>
+            <button class="btn btn-stop" id="endBtn" onclick="endInterview()" style="display:none">End Interview</button>
+        </div>
+        <button class="interrupt-btn" id="interruptBtn" onclick="sendInterrupt()">✋ Interrupt Alex</button>
+    </div>
+</div>
+
+<script>
+// ── state ──────────────────────────────────────────────────────────────────
+let ws = null;
+let isConnected = false;
+let currentLang = "en";
+
+// VAD state machine: "idle" | "listening" | "recording" | "processing" | "ai_speaking"
+let vadState = "idle";
+
+let audioCtx = null;
+let analyser = null;
+let micStream = null;
+let mediaRecorder = null;
+let audioChunks = [];
+let silenceTimer = null;
+
+// audio playback
+let currentAudio = null;
+let speakingGuardTimer = null; // safety: force-resume if audio hangs
+
+const SILENCE_MS = 1800;          // ms of silence before auto-stop
+const VOICE_THRESHOLD = 8;        // RMS threshold — normal speech is ~8-15, silence ~0-2
+const POST_SPEECH_COOLDOWN = 700; // ms to wait after Alex stops before mic re-activates
+const MIN_AUDIO_BYTES = 4000;     // skip clips shorter than this — likely noise/echo
+const MAX_SPEAKING_MS = 20000;    // safety: force-resume mic if Alex's audio hangs this long
+const WS_URL = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/interview`;
+
+// ── helpers ────────────────────────────────────────────────────────────────
+function setStatus(type, text) {
+    document.getElementById('statusDot').className = `status-dot ${type}`;
+    document.getElementById('statusText').textContent = text;
+}
+
+function setLang(lang) {
+    currentLang = lang;
+    const badge = document.getElementById('langBadge');
+    badge.className = `lang-badge ${lang}`;
+    badge.textContent = lang === 'hi' ? '🇮🇳 Hindi' : '🌐 English';
+}
+
+function addMessage(speaker, text) {
+    const box = document.getElementById('transcriptBox');
+    const empty = document.getElementById('emptyState');
+    if (empty) empty.remove();
+    const msg = document.createElement('div');
+    msg.className = `message ${speaker}`;
+    msg.innerHTML = `
+        <div class="message-label">${speaker === 'recruiter' ? '🧑‍💼 Alex' : '🎤 You'}</div>
+        <div class="message-bubble">${text}</div>`;
+    box.appendChild(msg);
+    box.scrollTop = box.scrollHeight;
+}
+
+function setMicState(state) {
+    // state: "muted" | "listening" | "recording"
+    const ring = document.getElementById('micRing');
+    const label = document.getElementById('micLabel');
+    ring.className = 'mic-ring';
+    if (state === 'muted') {
+        ring.classList.add('muted');
+        label.textContent = '';
+    } else if (state === 'listening') {
+        label.textContent = 'Listening…';
+    } else if (state === 'recording') {
+        ring.classList.add('active');
+        label.textContent = 'Speaking detected — keep going…';
+    }
+}
+
+// ── interrupt ───────────────────────────────────────────────────────────────
+function sendInterrupt() {
+    if (!ws || ws.readyState !== WebSocket.OPEN) return;
+
+    // Strip event handlers BEFORE pausing so onended can't fire resumeListening
+    // (setting .src='' or .pause() can trigger onended in some browsers)
+    if (currentAudio) {
+        currentAudio.onended = null;
+        currentAudio.onerror = null;
+        currentAudio.pause();
+        currentAudio = null;
+    }
+
+    ws.send(JSON.stringify({ type: 'interrupt' }));
+    document.getElementById('interruptBtn').classList.remove('visible');
+    document.getElementById('avatarContainer').classList.remove('speaking');
+
+    // Go straight to listening — NO cooldown delay on interrupt
+    vadState = 'listening';
+    setMicState('listening');
+    setStatus('recording', 'Interrupted — speak now!');
+    vadLoop(); // restart the VAD loop immediately
+}
+
+// ── VAD ─────────────────────────────────────────────────────────────────────
+async function startVAD() {
+    if (micStream) {
+        micStream.getTracks().forEach(t => t.stop());
+    }
+    try {
+        // echoCancellation + noiseSuppression prevent Alex's speaker output
+        // from being picked up by the mic (acoustic echo cancellation)
+        micStream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true,
+                sampleRate: 16000
+            },
+            video: false
+        });
+    } catch (e) {
+        setStatus('', 'Microphone access denied');
+        return;
+    }
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const source = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    source.connect(analyser);
+
+    vadState = 'listening';
+    setMicState('listening');
+    setStatus('connected', 'Listening…');
+    vadLoop();
+}
+
+function stopVAD() {
+    vadState = 'idle';
+    if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+    if (micStream) { micStream.getTracks().forEach(t => t.stop()); micStream = null; }
+    if (audioCtx) { audioCtx.close(); audioCtx = null; }
+    analyser = null;
+    setMicState('muted');
+}
+
+function getRMS() {
+    if (!analyser) return 0;
+    const buf = new Uint8Array(analyser.fftSize);
+    analyser.getByteTimeDomainData(buf);
+    let sum = 0;
+    for (let i = 0; i < buf.length; i++) {
+        const v = buf[i] - 128;
+        sum += v * v;
+    }
+    return Math.sqrt(sum / buf.length);
+}
+
+function vadLoop() {
+    if (vadState === 'idle' || vadState === 'processing' || vadState === 'ai_speaking') {
+        return; // pause the loop when not our turn
+    }
+
+    const rms = getRMS();
+
+    if (vadState === 'listening') {
+        if (rms > VOICE_THRESHOLD) {
+            vadState = 'recording';
+            setMicState('recording');
+            setStatus('recording', 'Recording — speak now…');
+            startCapture();
+        }
+    } else if (vadState === 'recording') {
+        if (rms < VOICE_THRESHOLD) {
+            // potential silence — start timer
+            if (!silenceTimer) {
+                silenceTimer = setTimeout(() => {
+                    silenceTimer = null;
+                    if (vadState === 'recording') {
+                        vadState = 'processing';
+                        setMicState('muted');
+                        setStatus('processing', 'Processing…');
+                        stopCapture();
+                    }
+                }, SILENCE_MS);
+            }
+        } else {
+            // voice resumed — cancel silence timer
+            if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+        }
+    }
+
+    requestAnimationFrame(vadLoop);
+}
+
+function startCapture() {
+    audioChunks = [];
+    mediaRecorder = new MediaRecorder(micStream);
+    mediaRecorder.ondataavailable = e => { if (e.data.size > 0) audioChunks.push(e.data); };
+    mediaRecorder.onstop = () => {
+        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        // Guard: skip tiny blobs — these are echo/noise artifacts, not real speech
+        if (blob.size < MIN_AUDIO_BYTES) {
+            console.log(`[VAD] Skipping tiny audio blob (${blob.size} bytes) — likely noise`);
+            // Resume listening without sending to server
+            vadState = 'listening';
+            setMicState('listening');
+            setStatus('connected', 'Your turn — speak now');
+            vadLoop();
+            return;
+        }
+        blob.arrayBuffer().then(buf => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(buf);
+            }
+        });
+    };
+    mediaRecorder.start();
+}
+
+function stopCapture() {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+    }
+}
+
+// ── audio playback ───────────────────────────────────────────────────────────
+function playAudioBytes(arrayBuffer) {
+    const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+    const url = URL.createObjectURL(blob);
+    const audio = new Audio(url);
+    currentAudio = audio;
+
+    audio.onended = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (speakingGuardTimer) { clearTimeout(speakingGuardTimer); speakingGuardTimer = null; }
+        // ONLY trigger resumeListening from here — not from speaking_done.
+        // speaking_done arrives while audio is still playing (race condition),
+        // so relying on it caused a double-call that reset the cooldown timer
+        // and permanently blocked the mic.
+        resumeListening();
+    };
+    audio.onerror = () => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (speakingGuardTimer) { clearTimeout(speakingGuardTimer); speakingGuardTimer = null; }
+        if (vadState === 'ai_speaking') resumeListening();
+    };
+    // If browser autoplay is blocked, play() returns a rejected Promise.
+    // In that case onended never fires, so we must manually resume the mic.
+    audio.play().catch(() => {
+        URL.revokeObjectURL(url);
+        currentAudio = null;
+        if (speakingGuardTimer) { clearTimeout(speakingGuardTimer); speakingGuardTimer = null; }
+        if (vadState === 'ai_speaking') resumeListening();
+    });
+}
+
+function resumeListening() {
+    document.getElementById('avatarContainer').classList.remove('speaking');
+    document.getElementById('interruptBtn').classList.remove('visible');
+    // Cooldown: wait for speaker echo to fade before re-activating mic
+    setStatus('connected', 'Get ready…');
+    setMicState('muted');
+    vadState = 'processing'; // block VAD loop during cooldown
+    setTimeout(() => {
+        if (vadState !== 'idle') { // check interview wasn't ended
+            vadState = 'listening';
+            setMicState('listening');
+            setStatus('connected', 'Your turn — speak now');
+            vadLoop();
+        }
+    }, POST_SPEECH_COOLDOWN);
+}
+
+// ── WebSocket ────────────────────────────────────────────────────────────────
+async function startInterview() {
+    document.getElementById('startBtn').disabled = true;
+    setStatus('processing', 'Connecting…');
+
+    ws = new WebSocket(WS_URL);
+    ws.binaryType = 'arraybuffer';
+
+    ws.onopen = async () => {
+        isConnected = true;
+        document.getElementById('startBtn').style.display = 'none';
+        document.getElementById('micRing').style.display = 'flex';
+        document.getElementById('endBtn').style.display = 'inline-flex';
+        setStatus('connected', 'Connected — waiting for Alex…');
+        // start VAD immediately but it will be paused during ai_speaking
+        await startVAD();
+    };
+
+    ws.onmessage = async (event) => {
+        if (typeof event.data === 'string') {
+            const msg = JSON.parse(event.data);
+
+            if (msg.type === 'transcript') {
+                addMessage(msg.speaker, msg.text);
+            }
+            else if (msg.type === 'language') {
+                setLang(msg.lang);
+            }
+            else if (msg.type === 'speaking_start') {
+                vadState = 'ai_speaking';
+                setMicState('muted');
+                document.getElementById('avatarContainer').classList.add('speaking');
+                document.getElementById('interruptBtn').classList.add('visible');
+                setStatus('speaking', 'Alex is speaking…');
+                if (silenceTimer) { clearTimeout(silenceTimer); silenceTimer = null; }
+                if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+                // Safety guard: if audio.onended never fires (e.g. browser hang),
+                // force-resume the mic after MAX_SPEAKING_MS so it's never permanently locked
+                if (speakingGuardTimer) clearTimeout(speakingGuardTimer);
+                speakingGuardTimer = setTimeout(() => {
+                    if (vadState === 'ai_speaking') {
+                        console.warn('[VAD] Speaking guard triggered — forcing mic resume');
+                        resumeListening();
+                    }
+                }, MAX_SPEAKING_MS);
+            }
+            else if (msg.type === 'speaking_done') {
+                // Audio is still playing when this arrives — don't call resumeListening() here.
+                // audio.onended is the sole trigger. Just update the avatar animation.
+                document.getElementById('avatarContainer').classList.remove('speaking');
+                document.getElementById('interruptBtn').classList.remove('visible');
+            }
+            else if (msg.type === 'interrupted') {
+                // sendInterrupt() already handled everything client-side instantly.
+                // This server confirmation is just an ack — do nothing.
+            }
+        } else {
+            // binary = mp3 audio bytes
+            playAudioBytes(event.data);
+        }
+    };
+
+    ws.onclose = () => {
+        isConnected = false;
+        stopVAD();
+        setStatus('', 'Disconnected');
+    };
+
+    ws.onerror = () => {
+        setStatus('', 'Connection error — is the server running?');
+    };
+}
+
+function endInterview() {
+    if (ws) ws.close();
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    stopVAD();
+    document.getElementById('micRing').style.display = 'none';
+    document.getElementById('endBtn').style.display = 'none';
+    document.getElementById('interruptBtn').classList.remove('visible');
+    document.getElementById('startBtn').style.display = 'inline-flex';
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('avatarContainer').classList.remove('speaking');
+    setStatus('', 'Interview ended');
+    addMessage('recruiter', '— Interview session ended —');
+}
+</script>
+</body>
+</html>

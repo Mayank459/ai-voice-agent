@@ -1,0 +1,17 @@
+fastapi>=0.111.0
+uvicorn[standard]>=0.30.1
+websockets>=13.0.0
+python-multipart>=0.0.9
+python-dotenv>=1.0.1
+
+# Speech to Text - runs locally using your GPU/CPU
+faster-whisper==1.0.3
+
+# LLM - Groq is free and insanely fast, perfect for real-time voice
+groq>=0.11.0
+httpx<0.28.0
+
+# Text to Speech - v7.x fixes the Microsoft 403 block on v6.x
+edge-tts>=7.2.8
+requests>=2.32.3
+
