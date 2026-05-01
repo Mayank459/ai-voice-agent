@@ -15,35 +15,13 @@ client = Groq(api_key=GROQ_API_KEY)
 # Collection names
 SESSIONS_COLLECTION = "sessions"
 
-REPORT_PROMPT = """You are an expert technical recruiter evaluator. You have just reviewed a mock technical phone screen interview transcript.
-
-Based on the conversation below, generate a detailed, structured candidate evaluation report.
-
-Your report MUST contain the following sections using this EXACT format (so it can be parsed easily):
+REPORT_PROMPT = """You are an expert technical recruiter. Evaluate the mock interview below and respond ONLY using this exact format:
 
 CANDIDATE_SCORE: [X/10]
-
-SUMMARY:
-[2-3 sentence overall summary of the candidate's performance]
-
-STRENGTHS:
-- [strength 1]
-- [strength 2]
-- [strength 3 if applicable]
-
-AREAS_FOR_IMPROVEMENT:
-- [area 1]
-- [area 2]
-- [area 3 if applicable]
-
-COMMUNICATION_SKILLS: [Excellent / Good / Average / Poor]
-TECHNICAL_DEPTH: [Excellent / Good / Average / Poor]
-CONFIDENCE: [High / Medium / Low]
-
-RECOMMENDATION: [Strong Hire / Hire / Maybe / No Hire]
-
-DETAILED_FEEDBACK:
-[3-5 sentences of specific, actionable feedback for the candidate]
+STRENGTHS: [2-3 sentence summary of what went well]
+AREAS_FOR_IMPROVEMENT: [2-3 sentence summary of what to improve]
+RECOMMENDATION: [YES - Strong Hire / YES - Hire / MAYBE / NO - No Hire]
+DETAILED_FEEDBACK: [2-3 sentences of specific actionable advice]
 
 Interview Transcript:
 {transcript}
@@ -129,7 +107,7 @@ async def generate_report(session_id: str) -> dict:
                         "content": REPORT_PROMPT.format(transcript=transcript)
                     }
                 ],
-                max_tokens=1000,
+            max_tokens=500,
                 temperature=0.3,
             )
             raw_report = response.choices[0].message.content.strip()
@@ -163,67 +141,27 @@ async def generate_report(session_id: str) -> dict:
 
 
 def _parse_report(raw: str) -> dict:
-    """Parse the structured LLM report output into a Python dict."""
+    """Parse the compact single-line LLM report output into a Python dict."""
     result = {"raw": raw}
     lines = raw.splitlines()
 
     def extract_value(prefix: str) -> str:
+        """Extract the value after a prefix on the same line."""
         for line in lines:
-            if line.strip().startswith(prefix):
-                return line.strip()[len(prefix):].strip()
+            stripped = line.strip()
+            if stripped.upper().startswith(prefix.upper()):
+                return stripped[len(prefix):].strip()
         return ""
 
-    def extract_block(start_marker: str, end_markers: list[str]) -> list[str]:
-        """Extract bullet list items between start_marker and next section."""
-        items = []
-        capturing = False
-        for line in lines:
-            stripped = line.strip()
-            if stripped.startswith(start_marker):
-                capturing = True
-                continue
-            if capturing:
-                if any(stripped.startswith(m) for m in end_markers):
-                    break
-                if stripped.startswith("-"):
-                    items.append(stripped[1:].strip())
-        return items
+    # All fields are inline in the compact format
+    result["score"]               = extract_value("CANDIDATE_SCORE:")
+    result["strengths"]           = extract_value("STRENGTHS:")
+    result["improvements"]        = extract_value("AREAS_FOR_IMPROVEMENT:")
+    result["recommendation"]      = extract_value("RECOMMENDATION:")
+    result["detailed_feedback"]   = extract_value("DETAILED_FEEDBACK:")
 
-    section_headers = [
-        "CANDIDATE_SCORE:", "SUMMARY:", "STRENGTHS:", "AREAS_FOR_IMPROVEMENT:",
-        "COMMUNICATION_SKILLS:", "TECHNICAL_DEPTH:", "CONFIDENCE:",
-        "RECOMMENDATION:", "DETAILED_FEEDBACK:"
-    ]
-
-    result["score"] = extract_value("CANDIDATE_SCORE:")
-    result["communication_skills"] = extract_value("COMMUNICATION_SKILLS:")
-    result["technical_depth"] = extract_value("TECHNICAL_DEPTH:")
-    result["confidence"] = extract_value("CONFIDENCE:")
-    result["recommendation"] = extract_value("RECOMMENDATION:")
-
-    # Multi-line blocks
-    def extract_multiline(start: str) -> str:
-        lines_out = []
-        capturing = False
-        for line in lines:
-            stripped = line.strip()
-            if stripped.startswith(start):
-                capturing = True
-                continue
-            if capturing:
-                if any(stripped.startswith(h) for h in section_headers if h != start):
-                    break
-                if stripped:
-                    lines_out.append(stripped)
-        return " ".join(lines_out)
-
-    result["summary"] = extract_multiline("SUMMARY:")
-    result["detailed_feedback"] = extract_multiline("DETAILED_FEEDBACK:")
-    result["strengths"] = extract_block(
-        "STRENGTHS:", ["AREAS_FOR_IMPROVEMENT:", "COMMUNICATION_SKILLS:", "TECHNICAL_DEPTH:", "CONFIDENCE:", "RECOMMENDATION:", "DETAILED_FEEDBACK:"]
-    )
-    result["areas_for_improvement"] = extract_block(
-        "AREAS_FOR_IMPROVEMENT:", ["COMMUNICATION_SKILLS:", "TECHNICAL_DEPTH:", "CONFIDENCE:", "RECOMMENDATION:", "DETAILED_FEEDBACK:"]
-    )
+    # Legacy / fallback aliases so older frontend code still works
+    result["areas_for_improvement"] = result["improvements"]
+    result["summary"]               = result["detailed_feedback"]
 
     return result

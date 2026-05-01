@@ -79,13 +79,18 @@
 
         .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
 
-        /* ── email input ── */
-        .user-access{margin-top:1.2rem;display:flex;gap:.75rem;width:100%;max-width:500px;justify-content:center;animation:fadeIn 1s ease;}
-        .user-access input{flex:1;background:rgba(15,15,25,.8);border:1px solid rgba(99,102,241,.3);border-radius:12px;padding:.6rem 1rem;color:white;font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:all .2s;backdrop-filter:blur(10px);}
-        .user-access input:focus{border-color:#818cf8;box-shadow:0 0 10px rgba(99,102,241,.2);}
-        .btn-history{background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;padding:.6rem 1.2rem;border-radius:12px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;white-space:nowrap;}
-        .btn-history:hover{background:rgba(99,102,241,.15);border-color:#818cf8;color:white;}
-        @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+        /* ── auth box ── */
+        .auth-box{background:rgba(15,15,25,.8);border:1px solid rgba(99,102,241,.3);border-radius:24px;padding:1.5rem;width:100%;max-width:400px;display:flex;flex-direction:column;gap:1rem;backdrop-filter:blur(15px);box-shadow:0 15px 35px rgba(0,0,0,.4);}
+        .auth-tabs{display:flex;background:rgba(255,255,255,.03);border-radius:12px;padding:.3rem;}
+        .auth-tab{flex:1;background:transparent;border:none;color:#64748b;padding:.6rem;cursor:pointer;font-weight:600;font-size:.85rem;border-radius:8px;transition:all .2s;}
+        .auth-tab.active{background:rgba(99,102,241,.15);color:white;}
+        .auth-inputs{display:flex;flex-direction:column;gap:.8rem;}
+        .auth-inputs input{background:rgba(0,0,0,.2);border:1px solid rgba(99,102,241,.2);border-radius:10px;padding:.7rem 1rem;color:white;font-family:inherit;font-size:.9rem;outline:none;transition:border-color .2s;}
+        .auth-inputs input:focus{border-color:#818cf8;}
+        .auth-footer{display:flex;justify-content:center;margin-top:.5rem;}
+        .user-info-display{display:none;background:rgba(99,102,241,.1);padding:.6rem 1.2rem;border-radius:12px;color:white;font-weight:600;font-size:.9rem;align-items:center;gap:1rem;}
+        .btn-logout{background:transparent;border:none;color:#f87171;font-size:.8rem;cursor:pointer;font-weight:600;padding:0;}
+
 
         /* ── report modal ── */
         .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:200;padding:2rem;}
@@ -124,10 +129,27 @@
         .history-meta{display:flex;justify-content:space-between;align-items:center;}
         .history-score{font-weight:800;color:#34d399;font-size:1rem;background:rgba(52,211,153,.1);padding:.2rem .6rem;border-radius:8px;}
         .history-rec{font-size:.8rem;font-weight:600;color:#a5b4fc;}
-        .history-empty{text-align:center;color:#475569;margin-top:4rem;font-size:.9rem;}
-        .overlay-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;display:none;backdrop-filter:blur(4px);}
-        .overlay-bg.visible{display:block;}
+        /* ── context modal (setup) ── */
+        .setup-modal{background:#0f0f19;border:1px solid rgba(99,102,241,.3);border-radius:24px;width:100%;max-width:500px;display:flex;flex-direction:column;padding:2rem;gap:1.5rem;box-shadow:0 25px 50px rgba(0,0,0,.6);}
+        .setup-title{font-size:1.4rem;font-weight:700;color:white;text-align:center;}
+        .form-group{display:flex;flex-direction:column;gap:.5rem;}
+        .form-label{font-size:.85rem;font-weight:600;color:#94a3b8;}
+        .file-input-wrapper{border:2px dashed rgba(99,102,241,.2);border-radius:12px;padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;}
+        .file-input-wrapper:hover{border-color:#818cf8;background:rgba(99,102,241,.05);}
+        .file-input-wrapper input{display:none;}
+        .file-info{font-size:.8rem;color:#64748b;margin-top:.5rem;}
+        .setup-actions{display:flex;gap:1rem;margin-top:1rem;}
+        .setup-actions .btn{flex:1;}
+
+        /* ── analytics ── */
+        .analytics-container{margin-bottom:2rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+        .stat-card{background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.1);padding:1rem;border-radius:16px;text-align:center;}
+        .stat-val{font-size:1.5rem;font-weight:800;color:#818cf8;}
+        .stat-lab{font-size:.7rem;text-transform:uppercase;color:#64748b;margin-top:.2rem;}
+        .trend-chart{height:100px;width:100%;display:flex;align-items:flex-end;gap:4px;margin-top:1rem;padding-bottom:10px;}
+        .trend-bar{flex:1;background:#818cf8;border-radius:2px;min-height:2px;transition:height .3s;}
     </style>
+
 
 
 </head>
@@ -139,10 +161,28 @@
         <p>Continuous conversation — speak naturally, interrupt anytime</p>
 
         <div class="user-access" id="userAccess">
-            <input type="email" id="userEmail" placeholder="Enter your email to save history..." onkeydown="if(event.key==='Enter') startInterview()">
-            <button class="btn-history" onclick="toggleHistory()">🕒 View History</button>
+            <div class="auth-box" id="authBox">
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="loginTab" onclick="setAuthMode('login')">Login</button>
+                    <button class="auth-tab" id="signupTab" onclick="setAuthMode('signup')">Sign Up</button>
+                </div>
+                <div class="auth-inputs">
+                    <input type="email" id="userEmail" placeholder="Email Address">
+                    <input type="password" id="userPass" placeholder="Password">
+                    <button class="btn btn-primary" id="authBtn" onclick="handleAuth()">Login to Start</button>
+                </div>
+                <div class="auth-footer">
+                    <button class="btn-history" onclick="toggleHistory()">🕒 View Dashboard</button>
+                </div>
+            </div>
+            <div class="user-info-display" id="userInfo">
+                <span id="displayEmail">user@example.com</span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+                <button class="btn-history" onclick="toggleHistory()">Dashboard</button>
+            </div>
         </div>
     </div>
+
 
 
     <!-- side-by-side: avatar left, chat right -->
@@ -184,17 +224,60 @@
     </div>
 </div>
 
+<!-- Setup Context Modal -->
+<div class="modal-overlay" id="setupOverlay">
+    <div class="setup-modal">
+        <div class="setup-title">Setup Your Interview</div>
+        <div class="form-group">
+            <label class="form-label">Upload Resume (PDF/DOCX) - Optional</label>
+            <div class="file-input-wrapper" onclick="document.getElementById('resumeFile').click()">
+                <div id="fileName">📁 Click to upload resume</div>
+                <div class="file-info">Alex will ask questions based on your experience</div>
+                <input type="file" id="resumeFile" accept=".pdf,.docx" onchange="updateFileName(this)">
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Job Description / Company - Optional</label>
+            <textarea id="jobDesc" placeholder="Paste JD or company name (e.g. 'Google SDE Role')" style="background:rgba(15,15,25,.8);border:1px solid rgba(99,102,241,.3);border-radius:12px;padding:1rem;color:white;font-family:inherit;min-height:80px;resize:none;"></textarea>
+        </div>
+        <div class="setup-actions">
+            <button class="btn btn-secondary" onclick="closeSetup()">Skip & Start</button>
+            <button class="btn btn-primary" id="saveContextBtn" onclick="saveContextAndStart()">Ready to Start!</button>
+        </div>
+    </div>
+</div>
+
 <!-- History Panel -->
 <div class="overlay-bg" id="historyOverlay" onclick="toggleHistory()"></div>
 <div class="history-panel" id="historyPanel">
     <div class="history-header">
-        <h3>Interview History</h3>
+        <h3>User Dashboard</h3>
         <button class="close-btn" onclick="toggleHistory()">&times;</button>
     </div>
+    
+    <!-- Analytics Section -->
+    <div id="analyticsSection" style="display:none;">
+        <div class="analytics-container">
+            <div class="stat-card">
+                <div class="stat-val" id="avgScore">0.0</div>
+                <div class="stat-lab">Avg Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="totalInt">0</div>
+                <div class="stat-lab">Interviews</div>
+            </div>
+        </div>
+        <div class="stat-card" style="margin-bottom:2rem;">
+            <div class="stat-lab" style="margin-bottom:.5rem;">Score Trend</div>
+            <div class="trend-chart" id="scoreTrend"></div>
+        </div>
+    </div>
+
     <div class="history-list" id="historyList">
-        <div class="history-empty">Enter your email and click "View History" to see your past reports</div>
+        <div class="history-empty">Enter your email to see your dashboard</div>
     </div>
 </div>
+
 
 <!-- Report Modal -->
 
@@ -485,19 +568,116 @@ function resumeListening() {
 }
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
-async function startInterview() {
+let authMode = 'login';
+let userToken = localStorage.getItem('token');
+let currentUser = localStorage.getItem('email');
+
+if (userToken) {
+    showLoggedInState();
+}
+
+function setAuthMode(mode) {
+    authMode = mode;
+    document.getElementById('loginTab').classList.toggle('active', mode === 'login');
+    document.getElementById('signupTab').classList.toggle('active', mode === 'signup');
+    document.getElementById('authBtn').innerText = mode === 'login' ? 'Login to Start' : 'Sign Up to Start';
+}
+
+async function handleAuth() {
     const email = document.getElementById('userEmail').value.trim();
-    if (!email) {
-        alert("Please enter your email to start the interview and save your progress.");
-        document.getElementById('userEmail').focus();
-        return;
-    }
-    // Simple email regex
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        alert("Please enter a valid email address.");
+    const password = document.getElementById('userPass').value.trim();
+
+    if (!email || !password) {
+        alert("Please enter both email and password.");
         return;
     }
 
+    const endpoint = authMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+    
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.detail || "Authentication failed");
+
+        userToken = data.access_token;
+        currentUser = data.email;
+        localStorage.setItem('token', userToken);
+        localStorage.setItem('email', currentUser);
+        
+        showLoggedInState();
+        alert(`Welcome, ${currentUser}!`);
+    } catch (e) {
+        alert(e.message);
+    }
+}
+
+function showLoggedInState() {
+    document.getElementById('authBox').style.display = 'none';
+    document.getElementById('userInfo').style.display = 'flex';
+    document.getElementById('displayEmail').innerText = currentUser;
+    document.getElementById('startBtn').style.display = 'flex';
+}
+
+function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('email');
+    location.reload();
+}
+
+async function startInterview() {
+    if (!userToken) {
+        alert("Please login first.");
+        return;
+    }
+    // Show setup modal
+    document.getElementById('setupOverlay').classList.add('visible');
+}
+
+function updateFileName(input) {
+
+    const name = input.files[0] ? input.files[0].name : "📁 Click to upload resume";
+    document.getElementById('fileName').innerText = name;
+}
+
+function closeSetup() {
+    document.getElementById('setupOverlay').classList.remove('visible');
+    proceedToWS();
+}
+
+async function saveContextAndStart() {
+    const email = document.getElementById('userEmail').value.trim();
+    const resumeFile = document.getElementById('resumeFile').files[0];
+    const jobDesc = document.getElementById('jobDesc').value.trim();
+    
+    const btn = document.getElementById('saveContextBtn');
+    btn.disabled = true;
+    btn.innerText = "Parsing Context...";
+
+    const formData = new FormData();
+    formData.append('email', email);
+    if (resumeFile) formData.append('resume', resumeFile);
+    if (jobDesc) formData.append('job_description', jobDesc);
+
+    try {
+        await fetch('/api/upload-context', {
+            method: 'POST',
+            body: formData
+        });
+    } catch (e) {
+        console.error("Context upload failed", e);
+    }
+    
+    document.getElementById('setupOverlay').classList.remove('visible');
+    proceedToWS();
+}
+
+async function proceedToWS() {
+    const email = document.getElementById('userEmail').value.trim();
     document.getElementById('startBtn').disabled = true;
     document.getElementById('userEmail').disabled = true;
     setStatus('processing', 'Connecting…');
@@ -505,6 +685,7 @@ async function startInterview() {
     const wsUrl = `${WS_URL}?email=${encodeURIComponent(email)}`;
     ws = new WebSocket(wsUrl);
     ws.binaryType = 'arraybuffer';
+
 
 
     ws.onopen = async () => {
@@ -682,36 +863,55 @@ async function toggleHistory() {
     const isOpen = panel.classList.contains('open');
 
     if (!isOpen) {
-        const email = document.getElementById('userEmail').value.trim();
-        if (!email) {
-            alert("Please enter your email to view your history.");
-            document.getElementById('userEmail').focus();
+        if (!currentUser) {
+            alert("Please login to view your dashboard.");
             return;
         }
         
         panel.classList.add('open');
         overlay.classList.add('visible');
-        await fetchHistory(email);
+        await fetchHistory(currentUser);
     } else {
         panel.classList.remove('open');
         overlay.classList.remove('visible');
     }
 }
 
+
 async function fetchHistory(email) {
     const list = document.getElementById('historyList');
     list.innerHTML = `<div style="text-align:center;padding:2rem;color:#64748b;">Loading history...</div>`;
+    document.getElementById('analyticsSection').style.display = 'none';
 
     try {
-        const response = await fetch(`/api/history/${encodeURIComponent(email)}`);
-        const data = await response.json();
+        // Fetch History
+        const histRes = await fetch(`/api/history/${encodeURIComponent(email)}`);
+        const histData = await histRes.json();
         
-        if (!data.history || data.history.length === 0) {
+        // Fetch Analytics
+        const analRes = await fetch(`/api/analytics/${encodeURIComponent(email)}`);
+        const analData = await analRes.json();
+        
+        if (analData.total_interviews > 0) {
+            document.getElementById('analyticsSection').style.display = 'block';
+            document.getElementById('avgScore').innerText = analData.average_score.toFixed(1);
+            document.getElementById('totalInt').innerText = analData.total_interviews;
+            
+            // Simple trend chart
+            const trend = document.getElementById('scoreTrend');
+            trend.innerHTML = analData.trend.map(t => {
+                const height = (t.score / 10) * 100;
+                return `<div class="trend-bar" style="height:${height}%" title="Score: ${t.score}"></div>`;
+            }).join('');
+        }
+
+        if (!histData.history || histData.history.length === 0) {
             list.innerHTML = `<div class="history-empty">No past interviews found for this email.</div>`;
             return;
         }
 
-        list.innerHTML = data.history.map(item => {
+        list.innerHTML = histData.history.map(item => {
+
             const date = new Date(item.started_at).toLocaleDateString(undefined, { 
                 month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
             });

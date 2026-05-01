@@ -69,21 +69,21 @@ def _transcribe(audio_path: str, language: str | None) -> tuple[str, str]:
         audio_path,
         language=language,
         beam_size=5,
-        vad_filter=True,                   # strips silence/noise before transcribing
+        vad_filter=True,
         vad_parameters=dict(
-            threshold=0.5,                 # VAD sensitivity (0–1, higher = less sensitive)
-            min_speech_duration_ms=200,    # ignore speech bursts shorter than 200ms
-            min_silence_duration_ms=300,   # ignore pauses shorter than 300ms
-            speech_pad_ms=100,             # padding around speech segments
+            threshold=0.3,                 # LOWERED: more sensitive to quiet speech
+            min_speech_duration_ms=100,    # LOWERED: catch shorter answers
+            min_silence_duration_ms=200,
+            speech_pad_ms=200,             # INCREASED: more padding around speech
         ),
-        no_speech_threshold=0.7,           # if >70% chance of no speech, output nothing
-        log_prob_threshold=-1.0,           # filter low-confidence segments
-        compression_ratio_threshold=2.4,   # filter repetitive/hallucinated outputs
-        condition_on_previous_text=False,  # prevents hallucination carry-over
+        no_speech_threshold=0.45,          # LOWERED from 0.7: don't filter valid speech
+        log_prob_threshold=-2.0,           # LOWERED: accept lower confidence segments
+        compression_ratio_threshold=2.4,
+        condition_on_previous_text=False,
     )
 
     text = " ".join(seg.text for seg in segments).strip()
     detected_lang = info.language if language is None else language
 
-    print(f"[STT] Transcribed (lang={detected_lang}, prob={info.language_probability:.2f}): '{text}'")
+    print(f"[STT] lang={detected_lang} prob={info.language_probability:.2f} text='{text}'")
     return text, detected_lang

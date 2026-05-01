@@ -44,7 +44,7 @@ This guide provides step-by-step instructions to deploy your AI Voice Agent to a
    ```
 4. Connect using SSH:
    ```bash
-   ssh -i "voice-agent-key.pem" ubuntu@[3.107.74.166]
+   ssh -i "ai-voice-agent.pem" ubuntu@16.176.177.179  
    ```
    *(You can find your Public IP on the EC2 Dashboard by clicking your running instance).*
    Type `yes` when asked if you want to continue connecting.

@@ -1,21 +1,34 @@
+# ── Stage 1: Build React frontend ─────────────────────────────────────────
+FROM node:20-slim AS frontend-builder
+
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
+
+# ── Stage 2: Python backend + built frontend ──────────────────────────────
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# install system dependencies needed for faster-whisper and audio processing
+# System dependencies (ffmpeg for audio processing)
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
-# copy requirements first (for docker layer caching)
+# Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# copy the rest of the code
+# Copy backend source
 COPY . .
 
-# expose port
+# Copy built React app → FastAPI will serve it as static files
+COPY --from=frontend-builder /frontend/dist ./static
+
 EXPOSE 8000
 
-# start the server
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Production server (no --reload in prod)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

@@ -1,16 +1,18 @@
+import os
 from groq import Groq
-from app.core.config import GROQ_API_KEY, GROQ_MODEL
+from dotenv import load_dotenv
+from app.core.config import GROQ_MODEL
 
-# initialize groq client
-client = Groq(api_key=GROQ_API_KEY)
+load_dotenv()
 
-# System prompt supporting both Hindi and English
-SYSTEM_PROMPT = """You are Alex, a senior technical recruiter at a top-tier tech company.
-You are conducting a mock technical phone screen interview with a candidate.
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-Your job is to:
-1. Start by introducing yourself warmly and asking the candidate to introduce themselves
-2. Ask about their background, projects, and experience
+SYSTEM_PROMPT = """You are Alex, a senior technical recruiter at TechCorp.
+You are conducting a short initial phone screen interview.
+
+Your goal:
+1. Briefly introduce yourself
+2. Ask the candidate to introduce themselves
 3. Ask 1-2 technical questions relevant to what they mention (don't go too deep, this is a phone screen)
 4. Ask about why they're interested in the role and what they're looking for
 5. End the interview professionally after 5-6 exchanges
@@ -29,20 +31,29 @@ MULTILINGUAL RULE (CRITICAL):
 - Never mix languages in a single response.
 - When replying in Hindi, use simple, natural spoken Hindi - not overly formal.
 
-IMPORTANT: This is a VOICE conversation. Keep all responses under 50 words.
-Do NOT use bullet points, markdown, or lists in your responses - just plain conversational sentences."""
+Do NOT use bullet points, markdown, or lists in your responses - just plain conversational sentences.
+
+{context_block}
+"""
 
 
-def get_ai_response(conversation_history: list, user_message: str, language: str = "en") -> str:
+def get_ai_response(conversation_history: list, user_message: str, language: str = "en", context: dict = None) -> str:
     """
     Sends the conversation history + new user message to Groq and gets a response.
-
-    conversation_history: list of {"role": "user/assistant", "content": "..."} dicts
-    user_message: the latest thing the user said
-    language: detected language from whisper ("en" or "hi")
-
-    Returns the AI's response as a string.
     """
+    # Build a context block for the system prompt
+    context_block = ""
+    if context:
+        if context.get("resume"):
+            context_block += f"\nCANDIDATE RESUME:\n{context['resume']}\n"
+        if context.get("job_description"):
+            context_block += f"\nJOB DESCRIPTION:\n{context['job_description']}\n"
+        if context.get("company_info"):
+            context_block += f"\nCOMPANY INFO:\n{context['company_info']}\n"
+        
+        if context_block:
+            context_block = f"\n--- USE THE FOLLOWING CONTEXT TO TAILOR THE INTERVIEW ---\n{context_block}\n"
+
     # Hint to the LLM about the detected language so it responds correctly
     lang_hint = f"[The candidate just spoke in {'Hindi' if language == 'hi' else 'English'}. Reply in the same language.]"
     full_message = f"{user_message}\n\n{lang_hint}"
@@ -56,14 +67,14 @@ def get_ai_response(conversation_history: list, user_message: str, language: str
         response = client.chat.completions.create(
             model=GROQ_MODEL,
             messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "system", "content": SYSTEM_PROMPT.format(context_block=context_block)},
                 *conversation_history
             ],
             max_tokens=150,
-            temperature=0.7,
+            temperature=0.7
         )
 
-        ai_response = response.choices[0].message.content.strip()
+        ai_response = response.choices[0].message.content
 
         # Store the clean response in history (without the lang hint)
         conversation_history[-1]["content"] = user_message
@@ -81,11 +92,11 @@ def get_ai_response(conversation_history: list, user_message: str, language: str
         return fallback
 
 
-def start_interview() -> tuple[list, str]:
+def start_interview(context: dict = None) -> tuple[list, str]:
     """
     Kicks off the interview by getting the AI's opening greeting.
     Returns (conversation_history, opening_message)
     """
     history = []
-    opening = get_ai_response(history, "Hello, I'm joining the interview call.", language="en")
+    opening = get_ai_response(history, "Hello, I'm joining the interview call.", language="en", context=context)
     return history, opening

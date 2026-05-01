@@ -4,7 +4,8 @@ import uuid
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.services import stt_service, tts_service
 from app.services.llm_service import get_ai_response, start_interview
-from app.services.report_service import save_turn
+from app.services.report_service import save_turn, generate_report
+from app.core.db import get_db
 
 
 router = APIRouter()
@@ -98,31 +99,58 @@ async def interview_websocket(websocket: WebSocket, email: str = None):
 
 
 
+    # --- Fetch User Context (Resume/JD) ---
+    db = get_db()
+    context_doc = await db["user_contexts"].find_one({"email": email.lower().strip()}) if email else None
+    user_context = None
+    if context_doc:
+        user_context = {
+            "resume": context_doc.get("resume_text"),
+            "job_description": context_doc.get("job_description"),
+            "company_info": context_doc.get("company_info")
+        }
+
     # --- Opening greeting ---
-    conversation_history, opening_message = start_interview()
+    conversation_history, opening_message = start_interview(context=user_context)
     await send_ai_speech(opening_message, "en")
+
 
     try:
         while True:
             data = await websocket.receive()
 
-            # ---- INTERRUPT signal from frontend ----
+            # ---- Text messages from frontend ----
             if "text" in data:
                 try:
                     msg = json.loads(data["text"])
+
                     if msg.get("type") == "interrupt":
                         print("[WS] Interrupt received from user!")
                         interrupted.set()
-                        # frontend will immediately send audio after the interrupt
-                    # ignore any other text messages
-                except Exception:
-                    pass
+
+                    elif msg.get("type") == "end_interview":
+                        print("[WS] End interview signal received — generating report...")
+                        await websocket.send_text(json.dumps({"type": "generating_report"}))
+                        report = await generate_report(session_id)
+                        await websocket.send_text(json.dumps({
+                            "type": "report",
+                            "report": report
+                        }))
+                        print("[WS] Report sent to client.")
+                        break  # Close the WebSocket loop cleanly
+
+                except Exception as e:
+                    print(f"[WS] Error handling text message: {e}")
                 continue
 
             # ---- Audio bytes from user ----
             if "bytes" in data:
                 audio_bytes = data["bytes"]
                 print(f"[WS] Received {len(audio_bytes)} bytes of audio from user")
+
+                if len(audio_bytes) < 1000:
+                    print(f"[WS] Audio too small ({len(audio_bytes)} bytes) — likely silence or bad recording, skipping.")
+                    continue
 
                 # Transcribe user voice + detect language
                 user_text, detected_lang = stt_service.transcribe_audio(audio_bytes)
@@ -150,11 +178,12 @@ async def interview_websocket(websocket: WebSocket, email: str = None):
                 # Persist candidate's turn to DB
                 await save_turn(session_id, "candidate", user_text, current_language, user_email=email)
 
-                # Get AI response (language-aware)
-                ai_response = get_ai_response(conversation_history, user_text, current_language)
+                # Get AI response (language-aware + context-aware)
+                ai_response = get_ai_response(conversation_history, user_text, current_language, context=user_context)
 
                 # Speak the AI response (interruptible)
                 await send_ai_speech(ai_response, current_language)
+
 
 
 
