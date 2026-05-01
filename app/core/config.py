@@ -9,13 +9,11 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 # Using llama3 because it's fast and free on groq's free tier
 GROQ_MODEL = "llama-3.1-8b-instant"
 
-# Whisper model size - "base" is a good balance of speed vs accuracy
-# using "small" for better Hindi/multilingual support
-WHISPER_MODEL_SIZE = "medium"
-
-# which device to run whisper on - "cuda" for nvidia gpu, "cpu" otherwise
-WHISPER_DEVICE = "cpu"
-WHISPER_COMPUTE_TYPE = "int8"  # int8 is best for CPU performance
+# STT Configuration
+WHISPER_MODEL_SIZE = os.getenv("WHISPER_MODEL_SIZE", "base")
+WHISPER_DEVICE = os.getenv("WHISPER_DEVICE", "cpu")
+WHISPER_COMPUTE_TYPE = os.getenv("WHISPER_COMPUTE_TYPE", "int8")
+  # int8 is best for CPU performance
 
 # edge-tts voices
 # English voice for Alex
