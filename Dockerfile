@@ -26,7 +26,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Copy built React app → FastAPI will serve it as static files
-COPY --from=frontend-builder /frontend/dist ./static
+# Since vite.config.js uses outDir: '../static', the builder outputs to /static
+COPY --from=frontend-builder /static ./static
 
 EXPOSE 8000
 
