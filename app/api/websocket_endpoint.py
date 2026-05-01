@@ -1,14 +1,18 @@
 import json
 import asyncio
+import uuid
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from app.services import stt_service, tts_service
 from app.services.llm_service import get_ai_response, start_interview
+from app.services.report_service import save_turn
+
 
 router = APIRouter()
 
 
 @router.websocket("/interview")
-async def interview_websocket(websocket: WebSocket):
+async def interview_websocket(websocket: WebSocket, email: str = None):
+
     """
     Main WebSocket endpoint for the mock interview.
 
@@ -30,7 +34,15 @@ async def interview_websocket(websocket: WebSocket):
       bytes  -> mp3 audio chunk for Alex's voice
     """
     await websocket.accept()
-    print("[WS] New interview session started!")
+    session_id = str(uuid.uuid4())
+    print(f"[WS] New interview session started! ID: {session_id}")
+
+    # Send session_id to client immediately so they can fetch report later
+    await websocket.send_text(json.dumps({
+        "type": "session_id",
+        "session_id": session_id
+    }))
+
 
     # shared flag: set to True when the frontend sends an interrupt
     interrupted = asyncio.Event()
@@ -78,7 +90,13 @@ async def interview_websocket(websocket: WebSocket):
 
         # notify frontend: Alex finished speaking (resume VAD mic)
         await websocket.send_text(json.dumps({"type": "speaking_done"}))
+
+        # Persist recruiter's turn to DB
+        await save_turn(session_id, "recruiter", text, language, user_email=email)
+        
         return True
+
+
 
     # --- Opening greeting ---
     conversation_history, opening_message = start_interview()
@@ -129,11 +147,16 @@ async def interview_websocket(websocket: WebSocket):
                     "text": user_text
                 }))
 
+                # Persist candidate's turn to DB
+                await save_turn(session_id, "candidate", user_text, current_language, user_email=email)
+
                 # Get AI response (language-aware)
                 ai_response = get_ai_response(conversation_history, user_text, current_language)
 
                 # Speak the AI response (interruptible)
                 await send_ai_speech(ai_response, current_language)
+
+
 
     except (WebSocketDisconnect, RuntimeError):
         print("[WS] Interview session ended - client disconnected")

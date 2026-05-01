@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.api.websocket_endpoint import router as ws_router
+from app.api.report_endpoint import router as report_router
 
 app = FastAPI(
     title="AI Mock Interviewer",
@@ -11,6 +12,9 @@ app = FastAPI(
 
 # include the websocket routes
 app.include_router(ws_router, prefix="/ws")
+# include the report and session routes
+app.include_router(report_router, prefix="/api")
+
 
 # serve the static frontend files
 app.mount("/static", StaticFiles(directory="static"), name="static")

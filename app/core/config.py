@@ -25,3 +25,8 @@ TTS_VOICE_HI = "hi-IN-MadhurNeural"
 
 # Kept for backward compat
 TTS_VOICE = TTS_VOICE_EN
+
+# MongoDB - for storing interview sessions and generating reports
+# Set MONGO_URI in your .env file. Defaults to local MongoDB instance.
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "ai_interviewer")

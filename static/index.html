@@ -76,7 +76,60 @@
         .btn-stop{background:rgba(30,30,50,.9);color:#94a3b8;border:1px solid rgba(99,102,241,.2);}
         .btn-stop:hover:not(:disabled){background:rgba(40,40,60,.9);color:#c7d2fe;}
         .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+        .btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+        /* ── email input ── */
+        .user-access{margin-top:1.2rem;display:flex;gap:.75rem;width:100%;max-width:500px;justify-content:center;animation:fadeIn 1s ease;}
+        .user-access input{flex:1;background:rgba(15,15,25,.8);border:1px solid rgba(99,102,241,.3);border-radius:12px;padding:.6rem 1rem;color:white;font-family:'Inter',sans-serif;font-size:.9rem;outline:none;transition:all .2s;backdrop-filter:blur(10px);}
+        .user-access input:focus{border-color:#818cf8;box-shadow:0 0 10px rgba(99,102,241,.2);}
+        .btn-history{background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.3);color:#a5b4fc;padding:.6rem 1.2rem;border-radius:12px;cursor:pointer;font-size:.85rem;font-weight:600;transition:all .2s;white-space:nowrap;}
+        .btn-history:hover{background:rgba(99,102,241,.15);border-color:#818cf8;color:white;}
+        @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+
+        /* ── report modal ── */
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:200;padding:2rem;}
+        .modal-overlay.visible{display:flex;}
+        .report-modal{background:#0f0f19;border:1px solid rgba(99,102,241,.3);border-radius:24px;width:100%;max-width:800px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;box-shadow:0 25px 50px -12px rgba(0,0,0,.5);animation:modalIn .4s cubic-bezier(0.16, 1, 0.3, 1);}
+        @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(20px);}to{opacity:1;transform:scale(1) translateY(0);}}
+        .report-header{padding:1.5rem 2rem;border-bottom:1px solid rgba(99,102,241,.1);display:flex;justify-content:space-between;align-items:center;background:linear-gradient(to right, rgba(99,102,241,.05), transparent);}
+        .report-header h2{font-size:1.5rem;font-weight:700;color:#e2e8f0;}
+        .close-btn{background:transparent;border:none;color:#94a3b8;cursor:pointer;font-size:1.5rem;padding:.5rem;line-height:1;transition:color .2s;}
+        .close-btn:hover{color:white;}
+        .report-content{padding:2rem;display:flex;flex-direction:column;gap:1.5rem;}
+        .report-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:1rem;}
+        .metric-card{background:rgba(99,102,241,.05);border:1px solid rgba(99,102,241,.1);padding:1rem;border-radius:16px;}
+        .metric-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.05em;color:#64748b;margin-bottom:.25rem;}
+        .metric-value{font-size:1.1rem;font-weight:700;color:#a5b4fc;}
+        .score-value{font-size:1.5rem;color:#34d399;}
+        .report-section{display:flex;flex-direction:column;gap:.5rem;}
+        .section-title{font-size:.9rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#818cf8;}
+        .section-text{font-size:.95rem;line-height:1.6;color:#cbd5e1;}
+        .bullet-list{list-style:none;display:flex;flex-direction:column;gap:.4rem;}
+        .bullet-list li{position:relative;padding-left:1.25rem;font-size:.92rem;color:#cbd5e1;}
+        .bullet-list li::before{content:'→';position:absolute;left:0;color:#34d399;font-weight:bold;}
+        .report-footer{padding:1.5rem 2rem;border-top:1px solid rgba(99,102,241,.1);display:flex;justify-content:flex-end;}
+
+        /* ── history panel ── */
+        .history-panel{position:fixed;right:-420px;top:0;width:400px;height:100vh;background:#0a0a0f;border-left:1px solid rgba(99,102,241,.2);z-index:300;transition:right .4s cubic-bezier(0.16, 1, 0.3, 1);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.7);padding:2rem;backdrop-filter:blur(20px);}
+        .history-panel.open{right:0;}
+        .history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:2rem;}
+        .history-header h3{font-size:1.3rem;font-weight:700;color:#e2e8f0;}
+        .history-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1.2rem;padding-right:.5rem;}
+        .history-list::-webkit-scrollbar{width:4px;}
+        .history-list::-webkit-scrollbar-thumb{background:rgba(99,102,241,.3);border-radius:2px;}
+        .history-item{background:rgba(15,15,25,.8);border:1px solid rgba(99,102,241,.1);border-radius:18px;padding:1.2rem;cursor:pointer;transition:all .2s;}
+        .history-item:hover{border-color:#818cf8;background:rgba(99,102,241,.08);transform:translateY(-3px);box-shadow:0 10px 20px rgba(0,0,0,.3);}
+        .history-date{font-size:.75rem;color:#64748b;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem;}
+        .history-meta{display:flex;justify-content:space-between;align-items:center;}
+        .history-score{font-weight:800;color:#34d399;font-size:1rem;background:rgba(52,211,153,.1);padding:.2rem .6rem;border-radius:8px;}
+        .history-rec{font-size:.8rem;font-weight:600;color:#a5b4fc;}
+        .history-empty{text-align:center;color:#475569;margin-top:4rem;font-size:.9rem;}
+        .overlay-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;display:none;backdrop-filter:blur(4px);}
+        .overlay-bg.visible{display:block;}
     </style>
+
+
 </head>
 <body>
 <div class="container">
@@ -84,7 +137,13 @@
         <div class="badge">🎙️ AI Voice Interview</div>
         <h1>Mock Tech Interview</h1>
         <p>Continuous conversation — speak naturally, interrupt anytime</p>
+
+        <div class="user-access" id="userAccess">
+            <input type="email" id="userEmail" placeholder="Enter your email to save history..." onkeydown="if(event.key==='Enter') startInterview()">
+            <button class="btn-history" onclick="toggleHistory()">🕒 View History</button>
+        </div>
     </div>
+
 
     <!-- side-by-side: avatar left, chat right -->
     <div class="interview-panel">
@@ -125,11 +184,45 @@
     </div>
 </div>
 
+<!-- History Panel -->
+<div class="overlay-bg" id="historyOverlay" onclick="toggleHistory()"></div>
+<div class="history-panel" id="historyPanel">
+    <div class="history-header">
+        <h3>Interview History</h3>
+        <button class="close-btn" onclick="toggleHistory()">&times;</button>
+    </div>
+    <div class="history-list" id="historyList">
+        <div class="history-empty">Enter your email and click "View History" to see your past reports</div>
+    </div>
+</div>
+
+<!-- Report Modal -->
+
+<div class="modal-overlay" id="reportOverlay">
+    <div class="report-modal">
+        <div class="report-header">
+            <h2>Interview Evaluation Report</h2>
+            <button class="close-btn" onclick="closeReport()">&times;</button>
+        </div>
+        <div class="report-content" id="reportContent">
+            <div style="text-align:center;padding:2rem;color:#94a3b8;">
+                Generating your AI report... this may take a few seconds.
+            </div>
+        </div>
+        <div class="report-footer">
+            <button class="btn btn-primary" onclick="closeReport()">Done</button>
+        </div>
+    </div>
+</div>
+
+
 <script>
 // ── state ──────────────────────────────────────────────────────────────────
 let ws = null;
 let isConnected = false;
 let currentLang = "en";
+let sessionId = null;
+
 
 // VAD state machine: "idle" | "listening" | "recording" | "processing" | "ai_speaking"
 let vadState = "idle";
@@ -393,11 +486,26 @@ function resumeListening() {
 
 // ── WebSocket ────────────────────────────────────────────────────────────────
 async function startInterview() {
+    const email = document.getElementById('userEmail').value.trim();
+    if (!email) {
+        alert("Please enter your email to start the interview and save your progress.");
+        document.getElementById('userEmail').focus();
+        return;
+    }
+    // Simple email regex
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert("Please enter a valid email address.");
+        return;
+    }
+
     document.getElementById('startBtn').disabled = true;
+    document.getElementById('userEmail').disabled = true;
     setStatus('processing', 'Connecting…');
 
-    ws = new WebSocket(WS_URL);
+    const wsUrl = `${WS_URL}?email=${encodeURIComponent(email)}`;
+    ws = new WebSocket(wsUrl);
     ws.binaryType = 'arraybuffer';
+
 
     ws.onopen = async () => {
         isConnected = true;
@@ -419,6 +527,11 @@ async function startInterview() {
             else if (msg.type === 'language') {
                 setLang(msg.lang);
             }
+            else if (msg.type === 'session_id') {
+                sessionId = msg.session_id;
+                console.log("[JS] Session ID received:", sessionId);
+            }
+
             else if (msg.type === 'speaking_start') {
                 vadState = 'ai_speaking';
                 setMicState('muted');
@@ -476,6 +589,164 @@ function endInterview() {
     document.getElementById('avatarContainer').classList.remove('speaking');
     setStatus('', 'Interview ended');
     addMessage('recruiter', '— Interview session ended —');
+    
+    if (sessionId) {
+        showReport();
+    }
+}
+
+async function showReport() {
+    const overlay = document.getElementById('reportOverlay');
+    const content = document.getElementById('reportContent');
+    overlay.classList.add('visible');
+    
+    content.innerHTML = `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;padding:3rem;">
+            <div class="status-dot processing" style="width:12px;height:12px;"></div>
+            <div style="color:#94a3b8;">Alex is analyzing your interview...</div>
+        </div>
+    `;
+
+    try {
+        const response = await fetch(`/api/report/${sessionId}`);
+        const report = await response.json();
+        
+        if (report.error) {
+            content.innerHTML = `<div style="color:#f87171;padding:2rem;text-align:center;">${report.error}</div>`;
+            return;
+        }
+
+        renderReport(report);
+    } catch (e) {
+        content.innerHTML = `<div style="color:#f87171;padding:2rem;text-align:center;">Failed to generate report. Please try again.</div>`;
+    }
+}
+
+function renderReport(r) {
+    const content = document.getElementById('reportContent');
+    
+    const strengths = r.strengths.map(s => `<li>${s}</li>`).join('');
+    const areas = r.areas_for_improvement.map(a => `<li>${a}</li>`).join('');
+    
+    content.innerHTML = `
+        <div class="report-grid">
+            <div class="metric-card">
+                <div class="metric-label">Overall Score</div>
+                <div class="metric-value score-value">${r.score || 'N/A'}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Recommendation</div>
+                <div class="metric-value" style="color:${r.recommendation.includes('Hire') ? '#34d399' : '#f87171'}">${r.recommendation}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Confidence</div>
+                <div class="metric-value">${r.confidence}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Technical Depth</div>
+                <div class="metric-value">${r.technical_depth}</div>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="section-title">Summary</div>
+            <div class="section-text">${r.summary}</div>
+        </div>
+
+        <div class="report-grid">
+            <div class="report-section">
+                <div class="section-title">Strengths</div>
+                <ul class="bullet-list">${strengths}</ul>
+            </div>
+            <div class="report-section">
+                <div class="section-title">Areas for Improvement</div>
+                <ul class="bullet-list">${areas}</ul>
+            </div>
+        </div>
+
+        <div class="report-section">
+            <div class="section-title">Detailed Feedback</div>
+            <div class="section-text">${r.detailed_feedback}</div>
+        </div>
+    `;
+}
+
+function closeReport() {
+    document.getElementById('reportOverlay').classList.remove('visible');
+}
+
+// ── history ─────────────────────────────────────────────────────────────────
+async function toggleHistory() {
+    const panel = document.getElementById('historyPanel');
+    const overlay = document.getElementById('historyOverlay');
+    const isOpen = panel.classList.contains('open');
+
+    if (!isOpen) {
+        const email = document.getElementById('userEmail').value.trim();
+        if (!email) {
+            alert("Please enter your email to view your history.");
+            document.getElementById('userEmail').focus();
+            return;
+        }
+        
+        panel.classList.add('open');
+        overlay.classList.add('visible');
+        await fetchHistory(email);
+    } else {
+        panel.classList.remove('open');
+        overlay.classList.remove('visible');
+    }
+}
+
+async function fetchHistory(email) {
+    const list = document.getElementById('historyList');
+    list.innerHTML = `<div style="text-align:center;padding:2rem;color:#64748b;">Loading history...</div>`;
+
+    try {
+        const response = await fetch(`/api/history/${encodeURIComponent(email)}`);
+        const data = await response.json();
+        
+        if (!data.history || data.history.length === 0) {
+            list.innerHTML = `<div class="history-empty">No past interviews found for this email.</div>`;
+            return;
+        }
+
+        list.innerHTML = data.history.map(item => {
+            const date = new Date(item.started_at).toLocaleDateString(undefined, { 
+                month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' 
+            });
+            return `
+                <div class="history-item" onclick="viewPastReport('${item.session_id}')">
+                    <div class="history-date">📅 ${date}</div>
+                    <div class="history-meta">
+                        <div class="history-rec">${item.report.recommendation}</div>
+                        <div class="history-score">${item.report.score || 'N/A'}</div>
+                    </div>
+                    <div style="font-size:0.75rem;color:#94a3b8;margin-top:0.6rem;line-height:1.4;">
+                        ${item.report.summary.substring(0, 80)}...
+                    </div>
+                </div>
+            `;
+        }).join('');
+    } catch (e) {
+        list.innerHTML = `<div style="color:#f87171;text-align:center;padding:2rem;">Failed to load history.</div>`;
+    }
+}
+
+async function viewPastReport(sid) {
+    // Reuse the existing report modal
+    const overlay = document.getElementById('reportOverlay');
+    const content = document.getElementById('reportContent');
+    overlay.classList.add('visible');
+    content.innerHTML = `<div style="text-align:center;padding:2rem;color:#94a3b8;">Loading report...</div>`;
+
+    try {
+        const response = await fetch(`/api/report/${sid}`);
+        const report = await response.json();
+        renderReport(report);
+    } catch (e) {
+        content.innerHTML = `<div style="color:#f87171;padding:2rem;text-align:center;">Failed to load report.</div>`;
+    }
 }
 </script>
 </body>
